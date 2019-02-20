@@ -28,8 +28,6 @@ class Row:
         pass
 
     def draw(self, table: "Table", row_num: int):
-        if self.name == "Carson Tang":
-            self.scores = [15 for _ in range(5)]
         data = self.name, str(sum(self.scores))
         if sum(self.scores) == CCC_TOTAL_POINTS:
             text_color = arcade.color.BLACK
