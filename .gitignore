@@ -2,3 +2,7 @@
 *.pyc
 .vscode/
 .mypy_cache
+
+.credentials
+leaderboard123.txt
+leaderboard124.txt

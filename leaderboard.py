@@ -6,12 +6,12 @@ import time
 from ccc_table_parser import CCCTableParser
 from ccc_scraper import CCCScraper
 
-USERNAME = ""
-PASSWORD = ""
-DEV_MODE = TRUE
+DEV_MODE = True
+with open(".credentials", "r") as f:
+    USERNAME, PASSWORD = f.read().split("\n")
 
-JR_NUMBER = 155
-SR_NUMBER = 157
+JR_NUMBER = 155  # 2020
+SR_NUMBER = 157  # 2020
 
 CCC_TOTAL_POINTS = 75
 WIDTH = 1440
@@ -70,7 +70,7 @@ class Row:
                     table.height * table.row_size * row_num - (table.height * table.row_size / 2)),
                 text_color,
                 font_size=FONT_SIZE,
-                width=table.width // len(data),
+                # width=table.width // len(data),
                 bold=False,
                 anchor_y="center")
 
@@ -87,11 +87,11 @@ class Row:
         stars = []
         for score in self.scores:
             if score == 15:
-                stars.append("★")
+                stars.append("█")  # ★
             elif score > 0:
-                stars.append("☆")
+                stars.append("▒")  # ☆
             else:
-                stars.append("")
+                stars.append(" ")
 
         for i, sym in enumerate(reversed(stars)):
             arcade.draw_text(sym,
@@ -100,8 +100,9 @@ class Row:
                               - table.height * table.row_size * row_num - (table.height * table.row_size / 2)),
                              star_color,
                              font_size=FONT_SIZE,
-                             width=FONT_SIZE,
-                             bold=False,
+                             font_name="Arial",
+                            #  width=FONT_SIZE,
+                            #  bold=False,
                              anchor_x="right",
                              anchor_y="center")
 
@@ -180,7 +181,7 @@ class Table:
                              self.y+self.height-self.height*self.header_size/2,
                              arcade.color.WHITE,
                              font_size=20,
-                             width=self.width,
+                            #  width=self.width,
                              bold=True,
                              anchor_y="center")
 
@@ -188,6 +189,8 @@ class Table:
         # print(self.rows)
         for i, row in enumerate(self.rows):
             row.draw(self, i)
+
+window = arcade.open_window(WIDTH, HEIGHT, "CCC Leaderboard")
 
 
 junior_table = Table(x=PADDING * 4, y=PADDING * 4, width=WIDTH // 2 - PADDING * 6, height=int(HEIGHT * 1.0) - PADDING*8)
@@ -205,11 +208,6 @@ def get_html_data(contest_id: int, table: Table):
         table.add_rows([student for student in parser.table_data if student["total_score"] > 0])
         time.sleep(5 if DEV_MODE else 20)
 
-# 2018 Junior = 123
-# 2018 Senior = 124
-# 2019 Junior = 144
-# 2019 Senior = 143
-
 
 jr_number = 123 if DEV_MODE else JR_NUMBER
 sr_number = 124 if DEV_MODE else SR_NUMBER
@@ -219,9 +217,6 @@ jr_fetch_thread.start()
 
 sr_fetch_thread = threading.Thread(target=get_html_data, args=(sr_number, senior_table))
 sr_fetch_thread.start()
-
-arcade.open_window(WIDTH, HEIGHT, "CCC Leaderboard")
-window = arcade.get_window()
 
 bg_shapelist = arcade.ShapeElementList()
 bg_shapelist.append(
