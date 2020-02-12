@@ -8,7 +8,10 @@ from ccc_scraper import CCCScraper
 
 USERNAME = ""
 PASSWORD = ""
-DEV_MODE = False
+DEV_MODE = TRUE
+
+JR_NUMBER = 155
+SR_NUMBER = 157
 
 CCC_TOTAL_POINTS = 75
 WIDTH = 1440
@@ -208,8 +211,8 @@ def get_html_data(contest_id: int, table: Table):
 # 2019 Senior = 143
 
 
-jr_number = 123 if DEV_MODE else 144
-sr_number = 124 if DEV_MODE else 143
+jr_number = 123 if DEV_MODE else JR_NUMBER
+sr_number = 124 if DEV_MODE else SR_NUMBER
 
 jr_fetch_thread = threading.Thread(target=get_html_data, args=(jr_number, junior_table))
 jr_fetch_thread.start()
