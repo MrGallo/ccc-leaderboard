@@ -19,4 +19,4 @@ Only students with points will show up.
 
 The tables are updated every 20 seconds.
 
-You can set `DEV_MODE = True` and it will load last year's tables (to ensure it actually works).
+You can set `DEV_MODE = True` and it will load 2018's tables (to ensure it actually works).
