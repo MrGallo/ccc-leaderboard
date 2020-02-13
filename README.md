@@ -7,10 +7,11 @@ As outlined in the Pipfile:
 
 ## Instructions
 
-1. In the `leaderboard.py` file, enter the school number as `USERNAME` and password as `PASSWORD`.
-2. Run `leaderboard.py`
-3. Press `f` to toggle full screen mode.
-4. You may have to adjust the `WIDTH` and `HEIGHT` of the window in `leaderboard.py`, 
+1. Create a `.credentials` file with the teacher login and pass on separate lines.
+2. Edit the `JR_NUMBER` and `SR_NUMBER` (in `leaderboard.py`) to the current contest's id. These ids are found in the link to view the CCC leaderboard chart in the cccgrader teacher section.
+3. Run `leaderboard.py`
+4. Press `f` to toggle full screen mode.
+5. You may have to adjust the `WIDTH` and `HEIGHT` of the window in `leaderboard.py`, 
 according to the display you are using.
 
 The junior chart is on the left, the senior on the right.
