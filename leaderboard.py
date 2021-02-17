@@ -90,9 +90,9 @@ class Row:
         stars = []
         for score in self.scores:
             if score == 15:
-                stars.append("█")  # ★
+                stars.append("★")
             elif score > 0:
-                stars.append("▒")  # ☆
+                stars.append("☆")
             else:
                 stars.append(" ")
 
@@ -100,12 +100,10 @@ class Row:
             arcade.draw_text(sym,
                              table.x + table.width - PADDING * 4 - i * FONT_SIZE * 1.4,
                              ((table.y + table.height - table.height * table.header_size)
-                              - table.height * table.row_size * row_num - (table.height * table.row_size / 2)),
+                              - table.height * table.row_size * row_num - (table.height * table.row_size / 2) + 5),
                              star_color,
-                             font_size=FONT_SIZE,
-                             font_name="Arial",
-                            #  width=FONT_SIZE,
-                            #  bold=False,
+                             font_size=FONT_SIZE * 1.7,
+                             font_name="unicode_font/DejaVuSansMono.ttf",
                              anchor_x="right",
                              anchor_y="center")
 
