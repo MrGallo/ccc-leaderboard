@@ -10,12 +10,15 @@ DEV_MODE = False
 with open(".credentials", "r") as f:
     USERNAME, PASSWORD = f.read().split("\n")
 
-JR_NUMBER = 155  # 2020
-SR_NUMBER = 157  # 2020
+# JR_NUMBER = 155  # 2020
+# SR_NUMBER = 157  # 2020
+
+JR_NUMBER = 171  # 2021
+SR_NUMBER = 172  # 2021
 
 CCC_TOTAL_POINTS = 75
-WIDTH = 1440
-HEIGHT = 960
+WIDTH = int(2160//1.5)
+HEIGHT = int(1440//1.5)
 PADDING = 5
 FONT_SIZE = 25
 
@@ -200,17 +203,22 @@ scraper = CCCScraper(username=USERNAME, password=PASSWORD, dev_mode=DEV_MODE)
 
 
 def get_html_data(contest_id: int, table: Table):
-    global scraper
+    global scraper, stop_threads
     parser = CCCTableParser()
-    while True:
+    while not stop_threads:
         html = scraper.scrape_leaderboard_html(contest_id=contest_id)
         parser.feed(html)
         table.add_rows([student for student in parser.table_data if student["total_score"] > 0])
-        time.sleep(5 if DEV_MODE else 20)
+
+        for _ in range(5 if DEV_MODE else 20):
+            if stop_threads:
+                break
+            time.sleep(1)
 
 
 jr_number = 123 if DEV_MODE else JR_NUMBER
 sr_number = 124 if DEV_MODE else SR_NUMBER
+stop_threads = False
 
 jr_fetch_thread = threading.Thread(target=get_html_data, args=(jr_number, junior_table))
 jr_fetch_thread.start()
@@ -247,4 +255,12 @@ def on_key_press(key, modifiers):
 
 arcade.set_background_color(arcade.color.WHITE)
 arcade.schedule(update, 1/60)
-arcade.run()
+
+try:
+    arcade.run()
+except KeyboardInterrupt:
+    pass
+
+stop_threads = True
+jr_fetch_thread.join()
+sr_fetch_thread.join()
