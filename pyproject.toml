@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "ccc-leaderboard"
+version = "0.1.0"
+description = ""
+authors = ["mrgallo <daniel.gallo@ycdsbk12.ca>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+requests = "^2.27.1"
+arcade = "^2.6.10"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
