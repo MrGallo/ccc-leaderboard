@@ -13,7 +13,7 @@ from ccc_table_parser import CCCTableParser
 from ccc_scraper import CCCScraper
 
 
-DEV_MODE = True
+DEV_MODE = False
 with open(".credentials", "r") as f:
     USERNAME, PASSWORD = f.read().split("\n")
 
