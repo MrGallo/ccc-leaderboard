@@ -16,7 +16,7 @@ class CCCTableParser(HTMLParser):
 
     FIELD_MAP = {
         "rank": int,
-        "name": parse_name.__func__,
+        "name": str,
         "school": str,
         "problem1_score": int,
         "problem2_score": int,

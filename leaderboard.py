@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import threading
 import time
 import math
+import hashlib
 
 import pygame
 from pygame.locals import K_ESCAPE, KEYDOWN, QUIT
@@ -25,6 +26,13 @@ HEIGHT = int(1920//2.0)
 
 PADDING = 5
 FONT_SIZE = 25
+
+
+try:
+    with open(".opt-out", "r") as f:
+        OPT_OUTS = [n.strip() for n in f.readlines()]
+except FileNotFoundError:
+    OPT_OUTS: list[str] = []
 
 pygame.font.init()
 
@@ -54,7 +62,14 @@ class Row:
         pass
 
     def draw(self, surface: pygame.Surface, table: "Table", row_num: int):
-        data = self.name, str(sum(self.scores))
+        parts = self.name.split(" ")
+        username = parts.pop()[1:-1]
+        display_name = " ".join(parts)
+        if username in OPT_OUTS:
+            hash = hashlib.md5(display_name.encode()).hexdigest()[:4]
+            display_name = "Anonymous " + hash[:2] + "-" + hash[2:]
+
+        data = display_name, str(sum(self.scores))
         if sum(self.scores) == CCC_TOTAL_POINTS:
             text_color = Color.BLACK
             star_color = text_color
