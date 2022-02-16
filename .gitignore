@@ -4,5 +4,6 @@
 .mypy_cache
 
 .credentials
+.opt-out
 leaderboard*.txt
 leaderboard*.txt
