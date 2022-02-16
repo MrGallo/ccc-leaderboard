@@ -67,7 +67,7 @@ class Row:
         display_name = " ".join(parts)
         if username in OPT_OUTS:
             hash = hashlib.md5(display_name.encode()).hexdigest()[:4]
-            display_name = "Anonymous " + hash[:2] + "-" + hash[2:]
+            display_name = "Anonymous " + hash
 
         data = display_name, str(sum(self.scores))
         if sum(self.scores) == CCC_TOTAL_POINTS:
@@ -312,8 +312,7 @@ while running:
             if event.key == K_ESCAPE:
                 running = False
             elif event.key == pygame.K_f:
-                # TODO set full screen
-                pass
+                pygame.display.toggle_fullscreen()
         elif event.type == QUIT:
             running = False
 
