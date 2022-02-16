@@ -3,7 +3,7 @@ import math
 import threading
 import time
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 import pygame
 from pygame.locals import K_ESCAPE, KEYDOWN, QUIT
@@ -171,7 +171,7 @@ class Table:
         self.height = height
         self.rows: List[Row] = []
         self.table_img = pygame.Surface((self.width, self.height))
-        self.student_rows_img = pygame.Surface((self.width, self.height), pygame.SRCALPHA, 32).convert_alpha()
+        self.student_rows_img: Optional[pygame.Surface] = None  # initialized on self._draw_students
 
         brightness = 0.5
         top_col = self.color
@@ -188,7 +188,7 @@ class Table:
             pygame.draw.line(self.table_img, color, (0, y), (self.width, y))
         
         self.draw_table_header(self.table_img)
-    
+        
     def draw_table_header(self, surface):
         # table header
         # bg
@@ -238,12 +238,17 @@ class Table:
 
     def draw(self, surface: pygame.Surface):
         surface.blit(self.table_img, (self.x, self.y))
-        surface.blit(self.student_rows_img, (self.x, self.y))
+        if self.student_rows_img is not None:
+            surface.blit(self.student_rows_img, (self.x, self.y))
 
     def _draw_students(self):
         # students
+        self._clear_student_rows_image()
         for i, row in enumerate(self.rows):
             row.draw(self.student_rows_img, self, i)
+
+    def _clear_student_rows_image(self):
+        self.student_rows_img = pygame.Surface((self.width, self.height), pygame.SRCALPHA, 32).convert_alpha()
 
 
 pygame.init()
