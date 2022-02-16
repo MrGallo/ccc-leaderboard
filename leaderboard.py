@@ -1,26 +1,44 @@
+from email import header
 from typing import List, Dict
 from dataclasses import dataclass, field
-import arcade
 import threading
 import time
+import math
+
+import pygame
+from pygame.locals import K_ESCAPE, KEYDOWN, QUIT
+
 from ccc_table_parser import CCCTableParser
 from ccc_scraper import CCCScraper
 
-DEV_MODE = False
+
+DEV_MODE = True
 with open(".credentials", "r") as f:
     USERNAME, PASSWORD = f.read().split("\n")
 
-# JR_NUMBER = 155  # 2020
-# SR_NUMBER = 157  # 2020
-
-JR_NUMBER = 171  # 2021
-SR_NUMBER = 172  # 2021
+JR_NUMBER = 173  # 2022
+SR_NUMBER = 174  # 2022
 
 CCC_TOTAL_POINTS = 75
-WIDTH = int(2160//1.5)
-HEIGHT = int(1440//1.5)
+WIDTH = int(2880//2.0)
+HEIGHT = int(1920//2.0)
+
 PADDING = 5
 FONT_SIZE = 25
+
+pygame.font.init()
+
+
+class Color:
+    WHITE = pygame.Color(255, 255, 255)
+    BLACK = pygame.Color(0, 0, 0)
+    GREEN = pygame.Color(0, 255, 0)
+    MIDNIGHT_BLUE = pygame.Color(25, 25, 112)
+    DARK_MIDNIGHT_BLUE = pygame.Color(0, 51, 102)
+    DARK_BLUE_GRAY = pygame.Color(102, 102, 153)
+    LIGHT_BLUE = pygame.Color(173, 216, 230)
+    SILVER_CHALICE = pygame.Color(172, 172, 172)
+    ORANGE_PEEL = pygame.Color(255, 159, 0)
 
 
 @dataclass
@@ -29,63 +47,78 @@ class Row:
     name: str
     scores: List[int]
     hovering: bool = False
+    font = pygame.font.SysFont('Arial', FONT_SIZE)
+    star_font = pygame.font.SysFont("Arial", int(FONT_SIZE * 1.7))
 
     def update(self):
         pass
 
-    def draw(self, table: "Table", row_num: int):
+    def draw(self, surface: pygame.Surface, table: "Table", row_num: int):
         data = self.name, str(sum(self.scores))
         if sum(self.scores) == CCC_TOTAL_POINTS:
-            text_color = arcade.color.BLACK
+            text_color = Color.BLACK
             star_color = text_color
-            bg_color = arcade.color.GREEN
+            bg_color = Color.GREEN
             bg_opacity = 150
         elif sum(self.scores) >= 4 * CCC_TOTAL_POINTS // 5:
-            text_color = arcade.color.GREEN
+            text_color = Color.GREEN
             star_color = text_color
             bg_opacity = 255
-            bg_color = arcade.color.MIDNIGHT_BLUE
+            bg_color = Color.MIDNIGHT_BLUE
         elif sum(self.scores) > 2 * CCC_TOTAL_POINTS // 5:
-            text_color = arcade.color.WHITE
-            star_color = tuple(int(v*1.3) for v in arcade.color.SILVER_CHALICE)
-            bg_color = arcade.color.BLACK
+            text_color = Color.WHITE
+            c = Color.SILVER_CHALICE
+            star_color = pygame.Color(int(c.r*1.3), int(c.g*1.3), int(c.b*1.3))
+            bg_color = Color.BLACK
             bg_opacity = 100
         else:
-            text_color = arcade.color.WHITE
-            star_color = tuple(int(c*0.9) for c in arcade.color.ORANGE_PEEL)
+            text_color = Color.WHITE
+            c = Color.ORANGE_PEEL
+            star_color = pygame.Color(int(c.r*0.9), int(c.g*0.9), int(c.b*0.9))
 
-            bg_color = arcade.color.MIDNIGHT_BLUE
+            bg_color = Color.MIDNIGHT_BLUE
             bg_opacity = 120
+        
+        bg_color.a = bg_opacity
+
         # Completion bar
         bar_width = sum(self.scores) / CCC_TOTAL_POINTS * table.width
-        arcade.draw_xywh_rectangle_filled(table.x,
-                                          ((table.y + table.height - table.height * table.header_size)
-                                           - table.height * table.row_size * (row_num + 1)),
-                                          bar_width,
-                                          table.height * table.row_size,
-                                          (*bg_color, bg_opacity))
+        pygame.draw.rect(surface,
+                         bg_color,
+                         (
+                             table.x,
+                             table.y + (table.height * table.header_size) + table.height * table.row_size * (row_num),
+                             bar_width,
+                             math.ceil(table.height * table.row_size))
+                          )
 
         for j, datum in enumerate(data):
-            arcade.draw_text(
-                str(datum),
-                j * table.width / len(table.header_labels) + table.x + PADDING * 2,
-                ((table.y + table.height - table.height * table.header_size) -
-                    table.height * table.row_size * row_num - (table.height * table.row_size / 2)),
-                text_color,
-                font_size=FONT_SIZE,
-                # width=table.width // len(data),
-                bold=False,
-                anchor_y="center")
+            data_text = Row.font.render(str(datum), True, text_color)
+            data_text_height = data_text.get_height()
+            surface.blit(
+                data_text,
+                (
+                    j * table.width / len(table.header_labels) + table.x + PADDING * 2,
+                    ((table.y + table.height * table.header_size) +
+                        table.height * table.row_size * row_num) + PADDING * 2
+                )
+            )
 
             # horizontal line
-            arcade.draw_lrtb_rectangle_filled(
-                table.x,
-                table.x + table.width,
-                ((table.y + table.height - table.height * table.header_size) -
-                    table.height * table.row_size * row_num - (table.height * table.row_size)),
-                ((table.y + table.height - table.height * table.header_size) -
-                    table.height * table.row_size * row_num - (table.height * table.row_size) - 2),
-                table.color_dark)
+            pygame.draw.rect(
+                surface,
+                table.color_dark,
+                (
+                    table.x,
+                    (
+                        (table.y + table.height * table.header_size) +
+                        table.height * table.row_size * row_num + (table.height * table.row_size)
+                    ),
+                    table.width,
+                    2
+                )
+            )
+
         # stars
         stars = []
         for score in self.scores:
@@ -97,43 +130,50 @@ class Row:
                 stars.append(" ")
 
         for i, sym in enumerate(reversed(stars)):
-            arcade.draw_text(sym,
-                             table.x + table.width - PADDING * 4 - i * FONT_SIZE * 1.4,
-                             ((table.y + table.height - table.height * table.header_size)
-                              - table.height * table.row_size * row_num - (table.height * table.row_size / 2) + 5),
-                             star_color,
-                             font_size=FONT_SIZE * 1.7,
-                             font_name="unicode_font/DejaVuSansMono.ttf",
-                             anchor_x="right",
-                             anchor_y="center")
+            star_text = Row.star_font.render(
+                sym,
+                True,
+                star_color
+            )
+            star_text_width = star_text.get_width()
+            
+            x = table.x + table.width - (i + 1) * star_text_width - PADDING
+            y = ((table.y + table.height * table.header_size)
+                    + (table.height * table.row_size * row_num))
 
+            surface.blit(star_text, (x, y))
 
 
 class Table:
-    shapelist: arcade.ShapeElementList
+    shapelist: pygame.Surface
     header_size: int = 0.05
     header_labels: List[str] = ["name", "score"]
-    color: arcade.Color = arcade.color.DARK_BLUE_GRAY
+    color: Color = Color.DARK_BLUE_GRAY
+    font = pygame.font.SysFont('Arial', FONT_SIZE)
+    header_font = pygame.font.SysFont('Arial', FONT_SIZE, bold=True)
 
     def __init__(self, x: int=0, y: int=0, width: int=300, height: int=200):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
-        self.rows = []
-        self.shapelist = arcade.ShapeElementList()
+        self.rows: list[Row] = []
+        self.table_bg = pygame.Surface((self.width, self.height), masks=pygame.SRCALPHA)
+        self.table_bg.fill((0, 0, 0, 0))
 
         brightness = 0.5
         top_col = self.color
-        r, g, b = top_col
-        bot_col = (int(r * brightness), int(g * brightness), int(b * brightness))
+        r = top_col.r
+        g = top_col.g
+        b = top_col.b
+        bot_col = pygame.Color(int(r * brightness), int(g * brightness), int(b * brightness))
         self.color_dark = bot_col
-        self.shapelist.append(
-            arcade.create_rectangles_filled_with_colors(
-                [(x, y), (x+self.width, y), (x+self.width, y+self.height), (x, y+self.height)],
-                [bot_col, bot_col, top_col, top_col]
-            ),
-        )
+
+        # Table background gradient
+        for y in range(0, self.height):
+            percent = y / self.height
+            color = top_col.lerp(bot_col, percent)
+            pygame.draw.line(self.table_bg, color, (0, y), (self.width, y))
 
     @property
     def row_size(self):
@@ -163,35 +203,52 @@ class Table:
         for row in self.rows:
             row.update()
 
-    def draw(self):
+    def draw(self, surface: pygame.Surface):
         # table bg
-        self.shapelist.draw()
+        surface.blit(self.table_bg, (self.x, self.y))
 
+        self.draw_table_header(surface)
+    
+    def draw_table_header(self, surface):
         # table header
         # bg
-        arcade.draw_lrtb_rectangle_filled(self.x,
-                                          self.x+self.width,
-                                          self.y+self.height,
-                                          self.y+self.height - self.header_size*self.height,
-                                          self.color_dark)
+        pygame.draw.rect(
+            surface,
+            self.color_dark,
+            (
+                self.x,
+                # self.y+self.height - self.header_size*self.height,
+                self.y,
+                self.width,
+                self.header_size * self.height
+            )
+        )
 
         # labels
         for i, label in enumerate(self.header_labels):
-            arcade.draw_text(label.capitalize(),
-                             i*self.width/len(self.header_labels) + self.x + PADDING * 2,
-                             self.y+self.height-self.height*self.header_size/2,
-                             arcade.color.WHITE,
-                             font_size=20,
-                            #  width=self.width,
-                             bold=True,
-                             anchor_y="center")
+            header_text = Table.header_font.render(label.capitalize(), True, Color.WHITE)
+            header_text_height = header_text.get_height()
+            surface.blit(
+                header_text,
+                (
+                    i*self.width/len(self.header_labels) + self.x + PADDING * 2,
+                    self.y + header_text_height // 2 - PADDING
+                )
+            )
 
         # students
-        # print(self.rows)
         for i, row in enumerate(self.rows):
-            row.draw(self, i)
+            row.draw(surface, self, i)
 
-window = arcade.open_window(WIDTH, HEIGHT, "CCC Leaderboard")
+
+pygame.init()
+
+
+SIZE = (WIDTH, HEIGHT)
+
+screen = pygame.display.set_mode(SIZE)
+pygame.display.set_caption("CCC Leaderboard")
+clock = pygame.time.Clock()
 
 
 junior_table = Table(x=PADDING * 4, y=PADDING * 4, width=WIDTH // 2 - PADDING * 6, height=int(HEIGHT * 1.0) - PADDING*8)
@@ -214,8 +271,8 @@ def get_html_data(contest_id: int, table: Table):
             time.sleep(1)
 
 
-jr_number = 123 if DEV_MODE else JR_NUMBER
-sr_number = 124 if DEV_MODE else SR_NUMBER
+jr_number = 173 if DEV_MODE else JR_NUMBER
+sr_number = 174 if DEV_MODE else SR_NUMBER
 stop_threads = False
 
 jr_fetch_thread = threading.Thread(target=get_html_data, args=(jr_number, junior_table))
@@ -224,41 +281,38 @@ jr_fetch_thread.start()
 sr_fetch_thread = threading.Thread(target=get_html_data, args=(sr_number, senior_table))
 sr_fetch_thread.start()
 
-bg_shapelist = arcade.ShapeElementList()
-bg_shapelist.append(
-    arcade.create_rectangles_filled_with_colors(
-        [(0, 0), (0, HEIGHT), (WIDTH, HEIGHT), (WIDTH, 0)],
-        [arcade.color.DARK_MIDNIGHT_BLUE, arcade.color.LIGHT_BLUE, arcade.color.LIGHT_BLUE, arcade.color.DARK_MIDNIGHT_BLUE]))
+bg = pygame.Surface((WIDTH, HEIGHT), masks=pygame.SRCALPHA)
+bg.fill((0, 0, 0, 0))
+for y in range(HEIGHT):
+    percent = y / HEIGHT
+    color = Color.DARK_MIDNIGHT_BLUE.lerp(Color.LIGHT_BLUE, percent)
+    pygame.draw.line(bg, color, (0, y), (WIDTH, y))
+
+running = True
+pygame.event.clear()
+while running:
+    # EVENT HANDLING
+    for event in pygame.event.get():
+        if event.type == KEYDOWN:
+            if event.key == K_ESCAPE:
+                running = False
+            elif event.key == pygame.K_f:
+                # TODO set full screen
+                pass
+        elif event.type == QUIT:
+            running = False
+
+    screen.fill(Color.WHITE)
+
+    screen.blit(bg, (0, 0))
+    junior_table.draw(screen)
+    senior_table.draw(screen)
+
+    pygame.display.flip()
+    clock.tick(30)
 
 
-def update(delta_time):
-    pass
-
-
-@window.event
-def on_draw():
-    arcade.start_render()
-    bg_shapelist.draw()
-    junior_table.draw()
-    senior_table.draw()
-
-
-@window.event
-def on_key_press(key, modifiers):
-    if key == arcade.key.F:
-        window.set_fullscreen(not window.fullscreen)
-        # width, height = window.get_size()
-        # print(width, height)
-
-
-arcade.set_background_color(arcade.color.WHITE)
-arcade.schedule(update, 1/60)
-
-try:
-    arcade.run()
-except KeyboardInterrupt:
-    pass
-
+pygame.quit()
 stop_threads = True
 jr_fetch_thread.join()
 sr_fetch_thread.join()

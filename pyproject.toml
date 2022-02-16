@@ -7,7 +7,7 @@ authors = ["mrgallo <daniel.gallo@ycdsbk12.ca>"]
 [tool.poetry.dependencies]
 python = "^3.9"
 requests = "^2.27.1"
-arcade = "^2.6.10"
+pygame = "^2.1.2"
 
 [tool.poetry.dev-dependencies]
 
