@@ -11,7 +11,8 @@ from pygame.locals import K_ESCAPE, KEYDOWN, QUIT
 from ccc_scraper import CCCScraper
 from ccc_table_parser import CCCTableParser
 
-DEV_MODE = True
+DEV_MODE = False
+
 try:
     with open(".credentials", "r") as f:
         USERNAME, PASSWORD = f.read().split("\n")
