@@ -1,17 +1,15 @@
-from email import header
-from typing import List, Dict
-from dataclasses import dataclass, field
+import hashlib
+import math
 import threading
 import time
-import math
-import hashlib
+from dataclasses import dataclass
+from typing import List
 
 import pygame
 from pygame.locals import K_ESCAPE, KEYDOWN, QUIT
 
-from ccc_table_parser import CCCTableParser
 from ccc_scraper import CCCScraper
-
+from ccc_table_parser import CCCTableParser
 
 DEV_MODE = False
 with open(".credentials", "r") as f:
@@ -32,7 +30,7 @@ try:
     with open(".opt-out", "r") as f:
         OPT_OUTS = [n.strip() for n in f.readlines()]
 except FileNotFoundError:
-    OPT_OUTS: list[str] = []
+    OPT_OUTS: List[str] = []
 
 pygame.font.init()
 
@@ -172,7 +170,7 @@ class Table:
         self.y = y
         self.width = width
         self.height = height
-        self.rows: list[Row] = []
+        self.rows: List[Row] = []
         self.table_bg = pygame.Surface((self.width, self.height), masks=pygame.SRCALPHA)
         self.table_bg.fill((0, 0, 0, 0))
 
