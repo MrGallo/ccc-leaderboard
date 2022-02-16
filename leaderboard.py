@@ -12,8 +12,11 @@ from ccc_scraper import CCCScraper
 from ccc_table_parser import CCCTableParser
 
 DEV_MODE = False
-with open(".credentials", "r") as f:
-    USERNAME, PASSWORD = f.read().split("\n")
+try:
+    with open(".credentials", "r") as f:
+        USERNAME, PASSWORD = f.read().split("\n")
+except FileNotFoundError:
+    raise FileNotFoundError("You must have a .credentials file with the teacher login and password inside.")
 
 JR_NUMBER = 180  # 2022
 SR_NUMBER = 181  # 2022
