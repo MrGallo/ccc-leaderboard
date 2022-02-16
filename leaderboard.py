@@ -17,8 +17,8 @@ DEV_MODE = False
 with open(".credentials", "r") as f:
     USERNAME, PASSWORD = f.read().split("\n")
 
-JR_NUMBER = 173  # 2022
-SR_NUMBER = 174  # 2022
+JR_NUMBER = 180  # 2022
+SR_NUMBER = 181  # 2022
 
 CCC_TOTAL_POINTS = 75
 WIDTH = int(2880//2.0)
