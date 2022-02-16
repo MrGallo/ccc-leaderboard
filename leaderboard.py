@@ -11,7 +11,7 @@ from pygame.locals import K_ESCAPE, KEYDOWN, QUIT
 from ccc_scraper import CCCScraper
 from ccc_table_parser import CCCTableParser
 
-DEV_MODE = False
+DEV_MODE = True
 try:
     with open(".credentials", "r") as f:
         USERNAME, PASSWORD = f.read().split("\n")
@@ -59,9 +59,6 @@ class Row:
     font = pygame.font.SysFont('Arial', FONT_SIZE)
     star_font = pygame.font.SysFont("Arial", int(FONT_SIZE * 1.7))
 
-    def update(self):
-        pass
-
     def draw(self, surface: pygame.Surface, table: "Table", row_num: int):
         parts = self.name.split(" ")
         username = parts.pop()[1:-1]
@@ -102,20 +99,19 @@ class Row:
         pygame.draw.rect(surface,
                          bg_color,
                          (
-                             table.x,
-                             table.y + (table.height * table.header_size) + table.height * table.row_size * (row_num),
+                             0,
+                             (table.height * table.header_size) + table.height * table.row_size * (row_num),
                              bar_width,
                              math.ceil(table.height * table.row_size))
                           )
 
         for j, datum in enumerate(data):
             data_text = Row.font.render(str(datum), True, text_color)
-            data_text_height = data_text.get_height()
             surface.blit(
                 data_text,
                 (
-                    j * table.width / len(table.header_labels) + table.x + PADDING * 2,
-                    ((table.y + table.height * table.header_size) +
+                    j * table.width / len(table.header_labels) + PADDING * 2,
+                    ((table.height * table.header_size) +
                         table.height * table.row_size * row_num) + PADDING * 2
                 )
             )
@@ -125,9 +121,9 @@ class Row:
                 surface,
                 table.color_dark,
                 (
-                    table.x,
+                    0,
                     (
-                        (table.y + table.height * table.header_size) +
+                        (table.height * table.header_size) +
                         table.height * table.row_size * row_num + (table.height * table.row_size)
                     ),
                     table.width,
@@ -153,8 +149,8 @@ class Row:
             )
             star_text_width = star_text.get_width()
             
-            x = table.x + table.width - (i + 1) * star_text_width - PADDING
-            y = ((table.y + table.height * table.header_size)
+            x = table.width - (i + 1) * star_text_width - PADDING
+            y = ((table.height * table.header_size)
                     + (table.height * table.row_size * row_num))
 
             surface.blit(star_text, (x, y))
@@ -174,8 +170,8 @@ class Table:
         self.width = width
         self.height = height
         self.rows: List[Row] = []
-        self.table_bg = pygame.Surface((self.width, self.height), masks=pygame.SRCALPHA)
-        self.table_bg.fill((0, 0, 0, 0))
+        self.table_img = pygame.Surface((self.width, self.height))
+        self.student_rows_img = pygame.Surface((self.width, self.height), pygame.SRCALPHA, 32).convert_alpha()
 
         brightness = 0.5
         top_col = self.color
@@ -189,14 +185,37 @@ class Table:
         for y in range(0, self.height):
             percent = y / self.height
             color = top_col.lerp(bot_col, percent)
-            pygame.draw.line(self.table_bg, color, (0, y), (self.width, y))
+            pygame.draw.line(self.table_img, color, (0, y), (self.width, y))
+        
+        self.draw_table_header(self.table_img)
+    
+    def draw_table_header(self, surface):
+        # table header
+        # bg
+        pygame.draw.rect(
+            surface,
+            self.color_dark,
+            (0, 0, self.width, self.header_size * self.height)
+        )
+
+        # labels
+        for i, label in enumerate(self.header_labels):
+            header_text = Table.header_font.render(label.capitalize(), True, Color.WHITE)
+            header_text_height = header_text.get_height()
+            surface.blit(
+                header_text,
+                (
+                    i*self.width/len(self.header_labels) + PADDING * 2,
+                    header_text_height // 2 - PADDING
+                )
+            )
 
     @property
     def row_size(self):
         return (1 - self.header_size) / min(max(20, len(self.rows)), 35)
 
 
-    def add_row(self, rank: int, name: str, scores: List[int]):
+    def _add_row(self, rank: int, name: str, scores: List[int]):
         row = Row(rank=rank, name=name, scores=scores)
         self.rows.append(row)
 
@@ -213,48 +232,18 @@ class Table:
                 student["problem5_score"],
             ]
 
-            self.add_row(rank, name, scores)
-
-    def update(self):
-        for row in self.rows:
-            row.update()
+            self._add_row(rank, name, scores)
+        
+        self._draw_students()
 
     def draw(self, surface: pygame.Surface):
-        # table bg
-        surface.blit(self.table_bg, (self.x, self.y))
+        surface.blit(self.table_img, (self.x, self.y))
+        surface.blit(self.student_rows_img, (self.x, self.y))
 
-        self.draw_table_header(surface)
-    
-    def draw_table_header(self, surface):
-        # table header
-        # bg
-        pygame.draw.rect(
-            surface,
-            self.color_dark,
-            (
-                self.x,
-                # self.y+self.height - self.header_size*self.height,
-                self.y,
-                self.width,
-                self.header_size * self.height
-            )
-        )
-
-        # labels
-        for i, label in enumerate(self.header_labels):
-            header_text = Table.header_font.render(label.capitalize(), True, Color.WHITE)
-            header_text_height = header_text.get_height()
-            surface.blit(
-                header_text,
-                (
-                    i*self.width/len(self.header_labels) + self.x + PADDING * 2,
-                    self.y + header_text_height // 2 - PADDING
-                )
-            )
-
+    def _draw_students(self):
         # students
         for i, row in enumerate(self.rows):
-            row.draw(surface, self, i)
+            row.draw(self.student_rows_img, self, i)
 
 
 pygame.init()
