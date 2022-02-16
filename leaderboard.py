@@ -281,6 +281,8 @@ def get_html_data(contest_id: int, table: Table):
         parser.feed(html)
         table.add_rows([student for student in parser.table_data if student["total_score"] > 0])
 
+        # Gives the ability to sleep the thread for a given time
+        # and still be able to stop the thread mid-sleep
         for _ in range(5 if DEV_MODE else 20):
             if stop_threads:
                 break
